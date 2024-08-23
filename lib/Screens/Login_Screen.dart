@@ -247,7 +247,11 @@ class _LoginPageState extends State<LoginPage> {
       }),
     );
 
+    print("Body header ==> $response");
+
     if (response.statusCode == 200) {
+      print("Response statuscode ==> ${response.statusCode}");
+      print("Response body ==> ${response.body}");
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isLoggedIn', true);
 
@@ -261,6 +265,8 @@ class _LoginPageState extends State<LoginPage> {
         SnackBar(content: Text('Login Success')),
       );
     } else {
+      print("Error statuscode ==> ${response.statusCode}");
+      print("Error body ==> ${response.body}");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Login failed. Please try again.')),
       );

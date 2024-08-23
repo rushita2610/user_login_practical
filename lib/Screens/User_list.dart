@@ -17,6 +17,39 @@ class _UserListScreenState extends State<UserListScreen> {
   List<User> _users = [];
   bool _isLoading = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _fetchAllUsers();  // Fetch all users when the screen is initialized
+  }
+
+  Future<void> _fetchAllUsers() async {
+    setState(() {
+      _isLoading = true;
+    });
+    final response = await http.get(Uri.parse('https://dummyjson.com/users'));
+
+    print("Api call ==> ${"https://dummyjson.com/users"}");
+
+    if (response.statusCode == 200) {
+      print("Response statuscode ==> ${response.statusCode}");
+      print("Response body ==> ${response.body}");
+      setState(() {
+        _users = (jsonDecode(response.body)['users'] as List)
+            .map((data) => User.fromJson(data))
+            .toList();
+        _isLoading = false;
+      });
+    } else {
+      setState(() {
+        _isLoading = false;
+        print("Error statuscode ==> ${response.statusCode}");
+        print("Error body ==> ${response.body}");
+      });
+      throw Exception('Failed to load users');
+    }
+  }
+
   Future<void> _searchUsers(String query) async {
     setState(() {
       _isLoading = true;
@@ -62,7 +95,6 @@ class _UserListScreenState extends State<UserListScreen> {
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isLoggedIn', false);
-    // Clear search controller and user list before navigating
     _searchController.clear();
     setState(() {
       _users.clear();
@@ -73,12 +105,6 @@ class _UserListScreenState extends State<UserListScreen> {
         builder: (context) => LoginPage(),
       ),
     );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    // You may want to initialize user data here if needed
   }
 
   @override
@@ -103,7 +129,7 @@ class _UserListScreenState extends State<UserListScreen> {
             child: TextField(
               controller: _searchController,
               onChanged: (value) {
-                if(value.length > 3) {
+                if (value.length > 3) {
                   _searchUsers(_searchController.text);
                 }
               },
@@ -111,7 +137,7 @@ class _UserListScreenState extends State<UserListScreen> {
                 hintText: 'Search Users',
                 border: OutlineInputBorder(),
                 suffixIcon: IconButton(
-                  onPressed: (){},
+                  onPressed: () {},
                   icon: Icon(Icons.search),
                 ),
               ),
