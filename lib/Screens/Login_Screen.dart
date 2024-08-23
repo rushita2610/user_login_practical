@@ -18,6 +18,7 @@ class _LoginPageState extends State<LoginPage> {
 
   String? _usernameError;
   String? _passwordError;
+  bool _isCheckingLoginState = true;
 
   @override
   void dispose() {
@@ -36,7 +37,7 @@ class _LoginPageState extends State<LoginPage> {
     return null;
   }
 
-  void checkLoginState(BuildContext context) async {
+  Future<void> _checkLoginState() async {
     final prefs = await SharedPreferences.getInstance();
     final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
@@ -48,24 +49,26 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
     } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => LoginPage(),
-        ),
-      );
+      setState(() {
+        _isCheckingLoginState = false;
+      });
     }
   }
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    checkLoginState(context);
+    _checkLoginState();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isCheckingLoginState) {
+      return Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     var mediaQuery = MediaQuery.of(context);
     var screenHeight = mediaQuery.size.height;
     var screenWidth = mediaQuery.size.width;
@@ -75,7 +78,6 @@ class _LoginPageState extends State<LoginPage> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFF6A1B9A), Color(0xFFF48FB1)],
-            // Bright Blue to Light Blue
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -111,7 +113,6 @@ class _LoginPageState extends State<LoginPage> {
                     SizedBox(height: screenHeight * 0.05),
                     Container(
                       decoration: BoxDecoration(
-                        // color: Colors.white,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Column(
@@ -139,7 +140,7 @@ class _LoginPageState extends State<LoginPage> {
                           if (_usernameError != null)
                             Padding(
                               padding:
-                                  const EdgeInsets.only(left: 16.0, top: 4.0),
+                              const EdgeInsets.only(left: 16.0, top: 4.0),
                               child: Text(
                                 _usernameError!,
                                 style: const TextStyle(color: Colors.white),
@@ -151,7 +152,6 @@ class _LoginPageState extends State<LoginPage> {
                     SizedBox(height: screenHeight * 0.02),
                     Container(
                       decoration: BoxDecoration(
-                        // color: Colors.white,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Column(
@@ -180,7 +180,7 @@ class _LoginPageState extends State<LoginPage> {
                           if (_passwordError != null)
                             Padding(
                               padding:
-                                  const EdgeInsets.only(left: 16.0, top: 4.0),
+                              const EdgeInsets.only(left: 16.0, top: 4.0),
                               child: Text(
                                 _passwordError!,
                                 style: const TextStyle(color: Colors.white),
@@ -231,7 +231,11 @@ class _LoginPageState extends State<LoginPage> {
           : null;
       _passwordError = _validatePassword(_passwordController.text);
     });
-    // API Call
+
+    if (_usernameError != null || _passwordError != null) {
+      return; // Prevent login attempt if there are validation errors
+    }
+
     final response = await http.post(
       Uri.parse('https://your-api-url.com/login'), // Replace with your API URL
       headers: <String, String>{
@@ -244,11 +248,10 @@ class _LoginPageState extends State<LoginPage> {
     );
 
     if (response.statusCode == 200) {
-      // Successfully logged in
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isLoggedIn', true);
 
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => UserListScreen(),
@@ -258,7 +261,6 @@ class _LoginPageState extends State<LoginPage> {
         SnackBar(content: Text('Login Success')),
       );
     } else {
-      // Handle login failure
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Login failed. Please try again.')),
       );

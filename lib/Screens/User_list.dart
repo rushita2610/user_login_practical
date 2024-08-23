@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,8 +21,7 @@ class _UserListScreenState extends State<UserListScreen> {
     setState(() {
       _isLoading = true;
     });
-    final response = await http
-        .get(Uri.parse('https://dummyjson.com/users/search?q=$query'));
+    final response = await http.get(Uri.parse('https://dummyjson.com/users/search?q=$query'));
 
     if (response.statusCode == 200) {
       setState(() {
@@ -44,8 +42,7 @@ class _UserListScreenState extends State<UserListScreen> {
     setState(() {
       _isLoading = true;
     });
-    final response = await http.get(Uri.parse(
-        'https://dummyjson.com/users/filter?key=hair.color&value=$hairColor'));
+    final response = await http.get(Uri.parse('https://dummyjson.com/users/filter?key=hair.color&value=$hairColor'));
 
     if (response.statusCode == 200) {
       setState(() {
@@ -65,6 +62,11 @@ class _UserListScreenState extends State<UserListScreen> {
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isLoggedIn', false);
+    // Clear search controller and user list before navigating
+    _searchController.clear();
+    setState(() {
+      _users.clear();
+    });
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -75,10 +77,9 @@ class _UserListScreenState extends State<UserListScreen> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+    // You may want to initialize user data here if needed
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -87,11 +88,7 @@ class _UserListScreenState extends State<UserListScreen> {
         title: Text('User List'),
         actions: [
           IconButton(
-            onPressed: () {
-              setState(() {
-                _logout();
-              });
-            },
+            onPressed: _logout,
             icon: Icon(
               Icons.logout,
               color: Colors.black,
@@ -105,14 +102,17 @@ class _UserListScreenState extends State<UserListScreen> {
             padding: const EdgeInsets.only(left: 16.0, right: 16),
             child: TextField(
               controller: _searchController,
+              onChanged: (value) {
+                if(value.length > 3) {
+                  _searchUsers(_searchController.text);
+                }
+              },
               decoration: InputDecoration(
-                labelText: 'Search Users',
+                hintText: 'Search Users',
                 border: OutlineInputBorder(),
                 suffixIcon: IconButton(
+                  onPressed: (){},
                   icon: Icon(Icons.search),
-                  onPressed: () {
-                    _searchUsers(_searchController.text);
-                  },
                 ),
               ),
             ),
